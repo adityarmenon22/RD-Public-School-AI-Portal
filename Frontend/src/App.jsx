@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+const API_URL = import.meta.env.VITE_API_URL || '${API_URL}';
 
 /* ============================================================================
    1. MANDATORY AUTHENTICATION GATE (Role-Verified Login & Registration)
@@ -24,7 +25,7 @@ function AuthGateway({ onAuthSuccess }) {
       : { name, email, password, role, accessCode };
 
     try {
-      const res = await fetch(`http://localhost:5000${endpoint}`, {
+      const res = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -214,7 +215,7 @@ function StudentParentPortal({ user }) {
   const token = localStorage.getItem('school_token');
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/chats', {
+    fetch('${API_URL}/api/chats', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then((res) => res.json())
@@ -227,7 +228,7 @@ function StudentParentPortal({ user }) {
   }, []);
 
   const fetchTickets = () => {
-    fetch('http://localhost:5000/api/tickets', {
+    fetch('${API_URL}/api/tickets', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then((res) => res.json())
@@ -247,7 +248,7 @@ function StudentParentPortal({ user }) {
     setIsTyping(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/chat', {
+      const res = await fetch('${API_URL}/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -271,7 +272,7 @@ function StudentParentPortal({ user }) {
     setTicketSuccess('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/tickets', {
+      const res = await fetch('${API_URL}/api/tickets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -474,7 +475,7 @@ function AdminDashboard({ user }) {
   const token = localStorage.getItem('school_token');
 
   const loadAllTickets = () => {
-    fetch('http://localhost:5000/api/tickets', {
+    fetch('${API_URL}/api/tickets', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then((res) => res.json())
@@ -500,7 +501,7 @@ function AdminDashboard({ user }) {
     if (!selectedTicket) return;
     setSaving(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/tickets/${selectedTicket.ticketId}`, {
+      const res = await fetch(`${API_URL}/api/tickets/${selectedTicket.ticketId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
