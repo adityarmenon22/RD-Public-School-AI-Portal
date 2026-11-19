@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-const API_URL = import.meta.env.VITE_API_URL || '${API_URL}';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rd-public-school-backend.onrender.com';
 
 /* ============================================================================
-   1. MANDATORY AUTHENTICATION GATE (Role-Verified Login & Registration)
+1. MANDATORY AUTHENTICATION GATE (Role-Verified Login & Registration)
 ============================================================================ */
 function AuthGateway({ onAuthSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -123,7 +124,6 @@ function AuthGateway({ onAuthSuccess }) {
                   </select>
                 </div>
 
-                {/* Conditional Secret Access Code Field for Parent or Staff */}
                 {(role === 'staff' || role === 'parent') && (
                   <div style={{ background: 'var(--bg-sand)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-warm)' }}>
                     <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '4px' }}>
@@ -193,7 +193,7 @@ function AuthGateway({ onAuthSuccess }) {
 }
 
 /* ============================================================================
-   2. STUDENT / PARENT INTERFACE (3-Column Full-Density Bento Layout)
+2. STUDENT / PARENT INTERFACE (3-Column Full-Density Bento Layout)
 ============================================================================ */
 function StudentParentPortal({ user }) {
   const [messages, setMessages] = useState([
@@ -215,7 +215,7 @@ function StudentParentPortal({ user }) {
   const token = localStorage.getItem('school_token');
 
   useEffect(() => {
-    fetch('${API_URL}/api/chats', {
+    fetch(`${API_URL}/api/chats`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then((res) => res.json())
@@ -228,7 +228,7 @@ function StudentParentPortal({ user }) {
   }, []);
 
   const fetchTickets = () => {
-    fetch('${API_URL}/api/tickets', {
+    fetch(`${API_URL}/api/tickets`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then((res) => res.json())
@@ -248,7 +248,7 @@ function StudentParentPortal({ user }) {
     setIsTyping(true);
 
     try {
-      const res = await fetch('${API_URL}/api/chat', {
+      const res = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -257,9 +257,15 @@ function StudentParentPortal({ user }) {
         body: JSON.stringify({ message: textToSend })
       });
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.reply || data.error || 'Failed to get AI response');
+      }
       setMessages((prev) => [...prev, { sender: 'bot', text: data.reply }]);
     } catch (err) {
-      setMessages((prev) => [...prev, { sender: 'bot', text: 'Connection error. Please ensure the backend server is running.' }]);
+      setMessages((prev) => [
+        ...prev,
+        { sender: 'bot', text: err.message || 'Connection error. Please ensure the backend server is running.' }
+      ]);
     } finally {
       setIsTyping(false);
     }
@@ -272,7 +278,7 @@ function StudentParentPortal({ user }) {
     setTicketSuccess('');
 
     try {
-      const res = await fetch('${API_URL}/api/tickets', {
+      const res = await fetch(`${API_URL}/api/tickets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -462,7 +468,7 @@ function StudentParentPortal({ user }) {
 }
 
 /* ============================================================================
-   3. STAFF / ADMIN COMMAND CENTER (Exclusive to role === 'staff')
+3. STAFF / ADMIN COMMAND CENTER (Exclusive to role === 'staff')
 ============================================================================ */
 function AdminDashboard({ user }) {
   const [tickets, setTickets] = useState([]);
@@ -475,7 +481,7 @@ function AdminDashboard({ user }) {
   const token = localStorage.getItem('school_token');
 
   const loadAllTickets = () => {
-    fetch('${API_URL}/api/tickets', {
+    fetch(`${API_URL}/api/tickets`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then((res) => res.json())
@@ -691,7 +697,7 @@ function AdminDashboard({ user }) {
 }
 
 /* ============================================================================
-   4. ROOT APPLICATION CONTROLLER
+4. ROOT APPLICATION CONTROLLER
 ============================================================================ */
 export default function App() {
   const [user, setUser] = useState(null);
