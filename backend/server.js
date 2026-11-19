@@ -151,7 +151,7 @@ app.get('/api/chats', authenticateToken, async (req, res) => {
   }
 });
 
-// 4. CHAT WITH LOCAL OLLAMA LLM
+// 4. CHAT WITH AI (Cloud Groq in Production / Local Ollama on PC)
 app.post('/api/chat', authenticateToken, async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: 'Message is required' });
@@ -159,25 +159,47 @@ app.post('/api/chat', authenticateToken, async (req, res) => {
   await ChatHistory.create({ userId: req.user.id, sender: 'user', text: message });
 
   try {
-    const response = await fetch('http://127.0.0.1:11434/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama3.2',
-        system: SYSTEM_INSTRUCTION,
-        prompt: message,
-        stream: false
-      })
-    });
+    let botReply = '';
 
-    const data = await response.json();
-    const botReply = data.response;
+    if (process.env.GROQ_API_KEY) {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-20b',
+          messages: [
+            { role: 'system', content: SYSTEM_INSTRUCTION },
+            { role: 'user', content: message }
+          ]
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message || 'Groq API error');
+      botReply = data.choices?.[0]?.message?.content || 'No response from AI.';
+    } else {
+      const response = await fetch('http://127.0.0.1:11434/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama3.2',
+          system: SYSTEM_INSTRUCTION,
+          prompt: message,
+          stream: false
+        })
+      });
+      const data = await response.json();
+      botReply = data.response;
+    }
 
     await ChatHistory.create({ userId: req.user.id, sender: 'bot', text: botReply });
     res.json({ reply: botReply });
   } catch (err) {
+    console.error('AI Chat Error:', err.message);
     res.status(500).json({
-      reply: "I'm having trouble connecting to the local AI engine. Please ensure Ollama is running!"
+      reply: "I'm having trouble connecting to the AI service right now. Please try again shortly."
     });
   }
 });
